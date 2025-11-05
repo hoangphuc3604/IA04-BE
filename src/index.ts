@@ -7,7 +7,29 @@ import authRouter from './routes/auth'
 dotenv.config()
 
 const app = express()
-app.use(cors({ origin: '*', credentials: false }))
+
+// Explicit CORS for deployed FE
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://ia04-fe.onrender.com',
+]
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true) // allow non-browser tools
+    if (allowedOrigins.includes(origin)) return cb(null, true)
+    return cb(new Error('Not allowed by CORS'))
+  },
+  credentials: false,
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+}))
+// Ensure preflight handled
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: false,
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+}))
 app.use(express.json())
 
 app.use('/auth', authRouter)
